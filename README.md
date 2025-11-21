@@ -16,7 +16,7 @@
 
 * NinjaTrader 8  
 * An active internet connection  
-* Target webhook URLs (e.g., Make.com, Zapier, ATS, or QuantLynk endpoints)
+* Target webhook URLs (ATS, or QuantLynk endpoints)
 
 ## **📦 Installation**
 
