@@ -69,6 +69,8 @@ Add the indicator to your chart like any standard indicator (Ctrl+I).
 * **Account Name**: Select the specific account to monitor (e.g., Sim101, MyFundedAccount). The indicator will ignore executions from other accounts.
 
 ## **🖥️ Usage**
+<img width="1001" height="799" alt="image" src="https://github.com/user-attachments/assets/74c55e7f-cbbc-4fb7-bd64-af2e009434b5" />
+<img width="1303" height="764" alt="image" src="https://github.com/user-attachments/assets/e78346ec-1b8d-4b3a-a587-d758a0cf2220" />
 
 Once applied to a chart, ensure **Chart Trader** is open. The indicator detects the Chart Trader panel and injects a custom control grid at the bottom.
 
@@ -83,37 +85,38 @@ Once applied to a chart, ensure **Chart Trader** is open. The indicator detects 
 ## **📡 Payload Structures**
 
 ### **ATS Payload**
-
+```
 {  
-  "user\_id": "string",  
+  "user_id": "string",  
   "spam-key": "string",  
   "contract": "ESZ23", // Automatic Futures Code conversion  
   "quantity": 1,  
   "price": 4500.50,  
-  "trade\_type": "buy", // buy, sell, or exit  
+  "trade_type": "buy", // buy, sell, or exit  
   "strategy": 0  
 }
-
+```
 ### **QuantLynk Payload**
 
 **For Entries:**
-
+```
 {  
-  "qv\_user\_id": "string",  
-  "alert\_id": "string",  
+  "qv_user_id": "string",  
+  "alert_id": "string",  
   "quantity": 1,  
-  "order\_type": "market",  
+  "order_type": "market",  
   "action": "buy" // or sell  
 }
+```
 
 **For Exits/Flatten:**
-
+```
 {  
-  "qv\_user\_id": "string",  
-  "alert\_id": "string",  
+  "qv_user_id": "string",  
+  "alert_id": "string",  
   "flatten": true  
 }
-
+```
 ## **🏗️ Technical Architecture**
 
 * **WebhookOrchestrator**: Manages a background Task that consumes execution snapshots from a thread-safe queue. This ensures that network lag never affects the NinjaTrader core loop.  
