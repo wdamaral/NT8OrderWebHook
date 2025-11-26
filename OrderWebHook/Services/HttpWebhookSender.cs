@@ -33,8 +33,7 @@ namespace NinjaTrader.Custom.Indicators.OrderWebHook.Services
                 sw.Stop();
 
                 // Detailed Log: "ATS sent - Response 200 OK - Elapsed: 100ms"
-                string detailedMsg = string.Format("{0:HH.mm.ss}: {1} sent - Response {2} {3} - Payload {4} - Elapsed: {5}ms",
-                    DateTime.Now,
+                string detailedMsg = string.Format("{0} sent - Response {1} {2} - Payload {3} - Elapsed: {4}ms",
                     providerName,
                     (int)response.StatusCode,
                     response.StatusCode,
@@ -42,7 +41,7 @@ namespace NinjaTrader.Custom.Indicators.OrderWebHook.Services
                     sw.ElapsedMilliseconds);
 
                 // Short Log: "ATS: 200 (100ms)"
-                string shortMsg = string.Format("{0:HH.mm.ss}: {1} sent: Response {2} {3} ({4}ms)",
+                string shortMsg = string.Format("{0:HH.mm.ss} - {1} sent: Response {2} {3} ({4}ms)",
                     DateTime.Now,
                     providerName,
                     (int)response.StatusCode,

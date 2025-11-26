@@ -13,6 +13,7 @@ using NinjaTrader.Custom.Indicators.OrderWebHook.UI;
 using NinjaTrader.Custom.Indicators.OrderWebHook.Interfaces;
 using NinjaTrader.Custom.Indicators.OrderWebHook.Providers.Ats;
 using NinjaTrader.Custom.Indicators.OrderWebHook.Providers.QuantLynk;
+using NinjaTrader.Custom.Indicators.OrderWebHook.Providers.Pipe;
 using NinjaTrader.Custom.Indicators.OrderWebHook.Utils;
 using NinjaTrader.Custom.Indicators.OrderWebHook.Models;
 using AccountNameConverter = NinjaTrader.Custom.Indicators.OrderWebHook.UI.AccountNameConverter;
@@ -36,6 +37,7 @@ namespace NinjaTrader.NinjaScript.Indicators
         // Configuration Objects (Bound to UI)
         private readonly AtsConfig _atsConfig = new AtsConfig();
         private readonly QuantLynkConfig _qlConfig = new QuantLynkConfig();
+        private readonly PipeConfig _pipeConfig = new PipeConfig();
 
         #region 1. ATS Settings
         [NinjaScriptProperty]
@@ -73,9 +75,27 @@ namespace NinjaTrader.NinjaScript.Indicators
         public string QlAlertId { get { return _qlConfig.AlertId; } set { _qlConfig.AlertId = value; } }
         #endregion
 
-        #region 3. General Settings
+        #region 3. Pipe Settings
         [NinjaScriptProperty]
-        [Display(Name = "Account Name", Description = "The account to monitor orders for", Order = 0, GroupName = "3. General Settings")]
+        [Display(Name = "Enable Pipe", Order = 1, GroupName = "3. Pipe Settings")]
+        public bool PipeEnabled { get { return _pipeConfig.Enabled; } set { _pipeConfig.Enabled = value; } }
+
+        [NinjaScriptProperty]
+        [Display(Name = "Pipe name", Order = 2, GroupName = "3. Pipe Settings")]
+        public string PipeUrl { get { return _pipeConfig.PipeName; } set { _pipeConfig.PipeName = value; } }
+
+        [NinjaScriptProperty]
+        [Display(Name = "User ID", Order = 3, GroupName = "3. Pipe Settings")]
+        public string PipeUserId { get { return _pipeConfig.UserId; } set { _pipeConfig.UserId = value; } }
+
+        [NinjaScriptProperty]
+        [Display(Name = "Spam Key", Order = 4, GroupName = "3. Pipe Settings")]
+        public string PipeSpamKey { get { return _pipeConfig.SpamKey; } set { _pipeConfig.SpamKey = value; } }
+        #endregion
+
+        #region 4. General Settings
+        [NinjaScriptProperty]
+        [Display(Name = "Account Name", Description = "The account to monitor orders for", Order = 0, GroupName = "4. General Settings")]
         [TypeConverter(typeof(AccountNameConverter))]
         public string AccountName { get; set; }
         #endregion
@@ -98,6 +118,7 @@ namespace NinjaTrader.NinjaScript.Indicators
                 _atsConfig.Url = "https://api.ats.com/hook";
                 _atsConfig.UserId = "USER_123";
                 _qlConfig.Url = "https://hooks.quantlynk.com";
+                _pipeConfig.PipeName = "TradovateController";
             }
             else if (State == State.Configure)
             {
@@ -110,7 +131,8 @@ namespace NinjaTrader.NinjaScript.Indicators
                 var providers = new List<IWebhookProvider>
                 {
                     new AtsProvider(_atsConfig, httpSender),
-                    new QuantLynkProvider(_qlConfig, httpSender)
+                    new QuantLynkProvider(_qlConfig, httpSender),
+                    new PipeProvider(_pipeConfig, Log)
                 };
 
                 // 3. Orchestrate
@@ -140,7 +162,7 @@ namespace NinjaTrader.NinjaScript.Indicators
                 {
                     ChartControl.Dispatcher.InvokeAsync(() =>
                     {
-                        _uiManager = new ChartUiManager(this, ChartControl, _atsConfig, _qlConfig);
+                        _uiManager = new ChartUiManager(this, ChartControl, _atsConfig, _qlConfig, _pipeConfig);
                         _uiManager.LoadControlPanel();
                     });
                 }
@@ -204,7 +226,7 @@ namespace NinjaTrader.NinjaScript.Indicators
             {
                 ChartControl.Dispatcher.InvokeAsync(() =>
                 {
-                    string formattedMsg = string.Format("{0} | {1}", DateTime.Now.ToShortTimeString(), outputMessage);
+                    string formattedMsg = string.Format("{0}", outputMessage);
                     NinjaTrader.Cbi.Log.Process(typeof(Resource), "CbiLogGeneric", new object[] { formattedMsg }, logLevel, LogCategories.Default);
 
                     if (_uiManager != null && !string.IsNullOrEmpty(gridMessage))
@@ -224,18 +246,18 @@ namespace NinjaTrader.NinjaScript.Indicators
 	public partial class Indicator : NinjaTrader.Gui.NinjaScript.IndicatorRenderBase
 	{
 		private OrderWebHook[] cacheOrderWebHook;
-		public OrderWebHook OrderWebHook(bool atsEnabled, string atsUrl, string atsUserId, string atsSpamKey, bool qlEnabled, string qlUrl, string qlUserId, string qlAlertId, string accountName)
+		public OrderWebHook OrderWebHook(bool atsEnabled, string atsUrl, string atsUserId, string atsSpamKey, bool qlEnabled, string qlUrl, string qlUserId, string qlAlertId, bool pipeEnabled, string pipeUrl, string pipeUserId, string pipeSpamKey, string accountName)
 		{
-			return OrderWebHook(Input, atsEnabled, atsUrl, atsUserId, atsSpamKey, qlEnabled, qlUrl, qlUserId, qlAlertId, accountName);
+			return OrderWebHook(Input, atsEnabled, atsUrl, atsUserId, atsSpamKey, qlEnabled, qlUrl, qlUserId, qlAlertId, pipeEnabled, pipeUrl, pipeUserId, pipeSpamKey, accountName);
 		}
 
-		public OrderWebHook OrderWebHook(ISeries<double> input, bool atsEnabled, string atsUrl, string atsUserId, string atsSpamKey, bool qlEnabled, string qlUrl, string qlUserId, string qlAlertId, string accountName)
+		public OrderWebHook OrderWebHook(ISeries<double> input, bool atsEnabled, string atsUrl, string atsUserId, string atsSpamKey, bool qlEnabled, string qlUrl, string qlUserId, string qlAlertId, bool pipeEnabled, string pipeUrl, string pipeUserId, string pipeSpamKey, string accountName)
 		{
 			if (cacheOrderWebHook != null)
 				for (int idx = 0; idx < cacheOrderWebHook.Length; idx++)
-					if (cacheOrderWebHook[idx] != null && cacheOrderWebHook[idx].AtsEnabled == atsEnabled && cacheOrderWebHook[idx].AtsUrl == atsUrl && cacheOrderWebHook[idx].AtsUserId == atsUserId && cacheOrderWebHook[idx].AtsSpamKey == atsSpamKey && cacheOrderWebHook[idx].QlEnabled == qlEnabled && cacheOrderWebHook[idx].QlUrl == qlUrl && cacheOrderWebHook[idx].QlUserId == qlUserId && cacheOrderWebHook[idx].QlAlertId == qlAlertId && cacheOrderWebHook[idx].AccountName == accountName && cacheOrderWebHook[idx].EqualsInput(input))
+					if (cacheOrderWebHook[idx] != null && cacheOrderWebHook[idx].AtsEnabled == atsEnabled && cacheOrderWebHook[idx].AtsUrl == atsUrl && cacheOrderWebHook[idx].AtsUserId == atsUserId && cacheOrderWebHook[idx].AtsSpamKey == atsSpamKey && cacheOrderWebHook[idx].QlEnabled == qlEnabled && cacheOrderWebHook[idx].QlUrl == qlUrl && cacheOrderWebHook[idx].QlUserId == qlUserId && cacheOrderWebHook[idx].QlAlertId == qlAlertId && cacheOrderWebHook[idx].PipeEnabled == pipeEnabled && cacheOrderWebHook[idx].PipeUrl == pipeUrl && cacheOrderWebHook[idx].PipeUserId == pipeUserId && cacheOrderWebHook[idx].PipeSpamKey == pipeSpamKey && cacheOrderWebHook[idx].AccountName == accountName && cacheOrderWebHook[idx].EqualsInput(input))
 						return cacheOrderWebHook[idx];
-			return CacheIndicator<OrderWebHook>(new OrderWebHook(){ AtsEnabled = atsEnabled, AtsUrl = atsUrl, AtsUserId = atsUserId, AtsSpamKey = atsSpamKey, QlEnabled = qlEnabled, QlUrl = qlUrl, QlUserId = qlUserId, QlAlertId = qlAlertId, AccountName = accountName }, input, ref cacheOrderWebHook);
+			return CacheIndicator<OrderWebHook>(new OrderWebHook(){ AtsEnabled = atsEnabled, AtsUrl = atsUrl, AtsUserId = atsUserId, AtsSpamKey = atsSpamKey, QlEnabled = qlEnabled, QlUrl = qlUrl, QlUserId = qlUserId, QlAlertId = qlAlertId, PipeEnabled = pipeEnabled, PipeUrl = pipeUrl, PipeUserId = pipeUserId, PipeSpamKey = pipeSpamKey, AccountName = accountName }, input, ref cacheOrderWebHook);
 		}
 	}
 }
@@ -244,14 +266,14 @@ namespace NinjaTrader.NinjaScript.MarketAnalyzerColumns
 {
 	public partial class MarketAnalyzerColumn : MarketAnalyzerColumnBase
 	{
-		public Indicators.OrderWebHook OrderWebHook(bool atsEnabled, string atsUrl, string atsUserId, string atsSpamKey, bool qlEnabled, string qlUrl, string qlUserId, string qlAlertId, string accountName)
+		public Indicators.OrderWebHook OrderWebHook(bool atsEnabled, string atsUrl, string atsUserId, string atsSpamKey, bool qlEnabled, string qlUrl, string qlUserId, string qlAlertId, bool pipeEnabled, string pipeUrl, string pipeUserId, string pipeSpamKey, string accountName)
 		{
-			return indicator.OrderWebHook(Input, atsEnabled, atsUrl, atsUserId, atsSpamKey, qlEnabled, qlUrl, qlUserId, qlAlertId, accountName);
+			return indicator.OrderWebHook(Input, atsEnabled, atsUrl, atsUserId, atsSpamKey, qlEnabled, qlUrl, qlUserId, qlAlertId, pipeEnabled, pipeUrl, pipeUserId, pipeSpamKey, accountName);
 		}
 
-		public Indicators.OrderWebHook OrderWebHook(ISeries<double> input , bool atsEnabled, string atsUrl, string atsUserId, string atsSpamKey, bool qlEnabled, string qlUrl, string qlUserId, string qlAlertId, string accountName)
+		public Indicators.OrderWebHook OrderWebHook(ISeries<double> input , bool atsEnabled, string atsUrl, string atsUserId, string atsSpamKey, bool qlEnabled, string qlUrl, string qlUserId, string qlAlertId, bool pipeEnabled, string pipeUrl, string pipeUserId, string pipeSpamKey, string accountName)
 		{
-			return indicator.OrderWebHook(input, atsEnabled, atsUrl, atsUserId, atsSpamKey, qlEnabled, qlUrl, qlUserId, qlAlertId, accountName);
+			return indicator.OrderWebHook(input, atsEnabled, atsUrl, atsUserId, atsSpamKey, qlEnabled, qlUrl, qlUserId, qlAlertId, pipeEnabled, pipeUrl, pipeUserId, pipeSpamKey, accountName);
 		}
 	}
 }
@@ -260,14 +282,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 {
 	public partial class Strategy : NinjaTrader.Gui.NinjaScript.StrategyRenderBase
 	{
-		public Indicators.OrderWebHook OrderWebHook(bool atsEnabled, string atsUrl, string atsUserId, string atsSpamKey, bool qlEnabled, string qlUrl, string qlUserId, string qlAlertId, string accountName)
+		public Indicators.OrderWebHook OrderWebHook(bool atsEnabled, string atsUrl, string atsUserId, string atsSpamKey, bool qlEnabled, string qlUrl, string qlUserId, string qlAlertId, bool pipeEnabled, string pipeUrl, string pipeUserId, string pipeSpamKey, string accountName)
 		{
-			return indicator.OrderWebHook(Input, atsEnabled, atsUrl, atsUserId, atsSpamKey, qlEnabled, qlUrl, qlUserId, qlAlertId, accountName);
+			return indicator.OrderWebHook(Input, atsEnabled, atsUrl, atsUserId, atsSpamKey, qlEnabled, qlUrl, qlUserId, qlAlertId, pipeEnabled, pipeUrl, pipeUserId, pipeSpamKey, accountName);
 		}
 
-		public Indicators.OrderWebHook OrderWebHook(ISeries<double> input , bool atsEnabled, string atsUrl, string atsUserId, string atsSpamKey, bool qlEnabled, string qlUrl, string qlUserId, string qlAlertId, string accountName)
+		public Indicators.OrderWebHook OrderWebHook(ISeries<double> input , bool atsEnabled, string atsUrl, string atsUserId, string atsSpamKey, bool qlEnabled, string qlUrl, string qlUserId, string qlAlertId, bool pipeEnabled, string pipeUrl, string pipeUserId, string pipeSpamKey, string accountName)
 		{
-			return indicator.OrderWebHook(input, atsEnabled, atsUrl, atsUserId, atsSpamKey, qlEnabled, qlUrl, qlUserId, qlAlertId, accountName);
+			return indicator.OrderWebHook(input, atsEnabled, atsUrl, atsUserId, atsSpamKey, qlEnabled, qlUrl, qlUserId, qlAlertId, pipeEnabled, pipeUrl, pipeUserId, pipeSpamKey, accountName);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-﻿using NinjaTrader.Custom.Indicators.OrderWebHook.Interfaces;
+using NinjaTrader.Custom.Indicators.OrderWebHook.Interfaces;
 using NinjaTrader.Gui.Chart;
 using System;
 using System.Windows;
@@ -16,23 +16,26 @@ namespace NinjaTrader.Custom.Indicators.OrderWebHook.UI
         private readonly ChartControl _chartControl;
         private readonly IProviderConfig _atsConfig;
         private readonly IProviderConfig _qlConfig;
+        private readonly IProviderConfig _pipeConfig;
 
         private Chart _chartWindow;
         private Grid _chartTraderGrid;
         private Grid _mainGrid;
         private Button _atsButton;
         private Button _qlButton;
+        private Button _pipeButton;
         private ListBox _logBox;
 
         private bool _panelActive;
         private DispatcherTimer _watcher;
 
-        public ChartUiManager(ILogger logger, ChartControl chartControl, IProviderConfig atsConfig, IProviderConfig qlConfig)
+        public ChartUiManager(ILogger logger, ChartControl chartControl, IProviderConfig atsConfig, IProviderConfig qlConfig, IProviderConfig pipeConfig)
         {
             _logger = logger;
             _chartControl = chartControl;
             _atsConfig = atsConfig;
             _qlConfig = qlConfig;
+            _pipeConfig = pipeConfig;
         }
 
         public void LoadControlPanel()
@@ -107,6 +110,7 @@ namespace NinjaTrader.Custom.Indicators.OrderWebHook.UI
 
         private void CreateWPFControls()
         {
+            // 3 Columns Grid (ATS | QL | PIPE)
             _mainGrid = new Grid
             {
                 Margin = new Thickness(0, 60, 0, 0),
@@ -116,7 +120,9 @@ namespace NinjaTrader.Custom.Indicators.OrderWebHook.UI
 
             // Row 0: Buttons
             _mainGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(30) });
-            // Row 1: Log Grid
+            // Row 1: Buttons
+            _mainGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(30) });
+            // Row 2: Log Grid
             _mainGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(100) });
 
             _mainGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -134,6 +140,13 @@ namespace NinjaTrader.Custom.Indicators.OrderWebHook.UI
             Grid.SetColumn(_qlButton, 1);
             _mainGrid.Children.Add(_qlButton);
 
+            // QL Button
+            _pipeButton = CreateButton("PIPE", _pipeConfig.Enabled, OnPipeClick);
+            Grid.SetRow(_pipeButton, 1);
+            Grid.SetColumn(_pipeButton, 0);
+            Grid.SetColumnSpan(_pipeButton, 2);
+            _mainGrid.Children.Add(_pipeButton);
+
             // Log ListBox
             _logBox = new ListBox
             {
@@ -149,7 +162,7 @@ namespace NinjaTrader.Custom.Indicators.OrderWebHook.UI
             // Correctly set the attached property
             ScrollViewer.SetVerticalScrollBarVisibility(_logBox, ScrollBarVisibility.Auto);
 
-            Grid.SetRow(_logBox, 1);
+            Grid.SetRow(_logBox, 2);
             Grid.SetColumn(_logBox, 0);
             Grid.SetColumnSpan(_logBox, 2); // Span across both buttons
             _mainGrid.Children.Add(_logBox);
@@ -216,6 +229,18 @@ namespace NinjaTrader.Custom.Indicators.OrderWebHook.UI
             e.Handled = true;
         }
 
+        private void OnPipeClick(object sender, RoutedEventArgs e)
+        {
+            _pipeConfig.Enabled = !_pipeConfig.Enabled;
+            UpdateButtonState(_pipeButton, "PIPE", _pipeConfig.Enabled);
+
+            string state = _pipeConfig.Enabled ? "ENABLED" : "DISABLED";
+            string shortState = _pipeConfig.Enabled ? "On" : "Off";
+            _logger.Log(string.Format("Pipe Service: {0}", state), string.Format("PIPE: {0}", shortState));
+
+            e.Handled = true;
+        }
+
         private void OnQlClick(object sender, RoutedEventArgs e)
         {
             _qlConfig.Enabled = !_qlConfig.Enabled;
@@ -256,3 +281,4 @@ namespace NinjaTrader.Custom.Indicators.OrderWebHook.UI
         }
     }
 }
+
