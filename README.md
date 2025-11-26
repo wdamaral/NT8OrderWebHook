@@ -77,6 +77,8 @@ Add the indicator to your chart like any standard indicator (Ctrl+I).
 * **Account Name**: Select the specific account to monitor (e.g., Sim101, MyFundedAccount). The indicator will ignore executions from other accounts.
 
 ## **🖥️ Usage**
+<img width="1001" height="799" alt="image" src="https://github.com/user-attachments/assets/74c55e7f-cbbc-4fb7-bd64-af2e009434b5" />
+<img width="1303" height="764" alt="image" src="https://github.com/user-attachments/assets/e78346ec-1b8d-4b3a-a587-d758a0cf2220" />
 
 Once applied to a chart, ensure **Chart Trader** is open. The indicator detects the Chart Trader panel and injects a custom control grid at the bottom.
 
@@ -92,7 +94,7 @@ Once applied to a chart, ensure **Chart Trader** is open. The indicator detects 
 ## **📡 Payload Structures**
 
 ### **ATS and PIPE Payload**
-
+```
 {
   "user_id": "string",
   "spam-key": "string",
@@ -102,27 +104,28 @@ Once applied to a chart, ensure **Chart Trader** is open. The indicator detects 
   "trade_type": "buy",
   "strategy": 0
 }
-
+```
 ### **QuantLynk Payload**
 
 **For Entries:**
-
-{
-  "qv_user_id": "string",
-  "alert_id": "string",
-  "quantity": 1,
-  "order_type": "market",
-  "action": "buy"
+```
+{  
+  "qv_user_id": "string",  
+  "alert_id": "string",  
+  "quantity": 1,  
+  "order_type": "market",  
+  "action": "buy" // or sell  
 }
+```
 
 **For Exits/Flatten:**
-
-{
-  "qv_user_id": "string",
-  "alert_id": "string",
-  "flatten": true
+```
+{  
+  "qv_user_id": "string",  
+  "alert_id": "string",  
+  "flatten": true  
 }
-
+```
 ## **🏗️ Technical Architecture**
 
 * **WebhookOrchestrator**: Manages a background Task that consumes execution snapshots from a thread-safe queue.
@@ -137,3 +140,4 @@ Once applied to a chart, ensure **Chart Trader** is open. The indicator detects 
 This software is **NOT** an official product of **NinjaTrader** or **QuantVue**. It is an independent open-source project created by the community.
 
 This software is for educational purposes only. Do not risk money you cannot afford to lose. The authors allow this code to be used "as-is" and accept no liability for financial losses, missed webhooks, or technical failures.
+
