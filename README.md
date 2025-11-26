@@ -77,8 +77,9 @@ Add the indicator to your chart like any standard indicator (Ctrl+I).
 * **Account Name**: Select the specific account to monitor (e.g., Sim101, MyFundedAccount). The indicator will ignore executions from other accounts.
 
 ## **🖥️ Usage**
-<img width="1001" height="799" alt="image" src="https://github.com/user-attachments/assets/74c55e7f-cbbc-4fb7-bd64-af2e009434b5" />
-<img width="1303" height="764" alt="image" src="https://github.com/user-attachments/assets/e78346ec-1b8d-4b3a-a587-d758a0cf2220" />
+<img width="1058" height="711" alt="image" src="https://github.com/user-attachments/assets/44541f01-74d1-488a-8948-37bcfcd4bede" />
+<img width="1255" height="725" alt="image" src="https://github.com/user-attachments/assets/c37d3a40-d8e9-4062-b0ad-f3e9d769c5ca" />
+
 
 Once applied to a chart, ensure **Chart Trader** is open. The indicator detects the Chart Trader panel and injects a custom control grid at the bottom.
 
